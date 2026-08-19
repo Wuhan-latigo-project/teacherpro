@@ -17,4 +17,5 @@ qrcode==8.2
 Pillow==12.2.0
 pyperclip==1.8.2
 pyautogui==0.9.54
-urllib3==2.6.3imageio
+urllib3==2.6.3
+imageio==2.31.0
