@@ -1,6 +1,5 @@
 name: Build Latigo Student (Windows)
 
-
 on:
   push:
     branches: [main, master]
