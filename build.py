@@ -132,15 +132,10 @@ def run_nuitka():
         "--include-package=certifi",
         "--include-package=idna",
 
-        # ❌ تم إزالة websockets (غير موجودة في البيئة)
-        # "--include-package=websockets",
-
         # ============================================================
-        # ✅ تضمين OpenCV (cv2)
+        # ✅ تضمين OpenCV (cv2 فقط)
         # ============================================================
         "--include-package=cv2",
-        "--include-package=opencv",
-        "--include-package=opencv_python",
         "--include-package=mediapipe",
 
         # ✅ تضمين PySide6 بشكل صريح
