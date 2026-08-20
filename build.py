@@ -2,6 +2,7 @@
 """
 Latigo Student — Build Script (Nuitka Only - No Obfuscation)
 Auto-creates missing __init__.py files for packages
+FIXED: Added explicit account modules (like teacher version)
 """
 import os
 import sys
@@ -76,7 +77,7 @@ def ensure_init_files():
             else:
                 print(f"   {init_file} already exists")
 
-    # Also ensure account/ subdirectories have __init__.py if they are sub-packages
+    # Also ensure account/ subdirectories have __init__.py
     account_dir = Path("account")
     if account_dir.exists():
         for subdir in account_dir.iterdir():
@@ -143,16 +144,28 @@ def run_nuitka():
         "--include-package=certifi",
         "--include-package=idna",
 
-        # ✅ تضمين websockets (للـ quiz)
+        # ✅ تضمين websockets
         "--include-package=websockets",
 
-        # ============================================================
-        # ✅ OpenCV (cv2) و MediaPipe (تم التصحيح)
-        # ============================================================
-        "--include-package=cv2",              # ✅ فقط cv2
-        # "--include-package=opencv",          # ❌ محذوف
-        # "--include-package=opencv_python",   # ❌ محذوف
+        # ✅ OpenCV (cv2) و MediaPipe
+        "--include-package=cv2",
         "--include-package=mediapipe",
+
+        # ============================================================
+        # ✅ تضمين account بشكل صريح (مثل نسخة المعلم)
+        # ============================================================
+        "--include-package=account",
+        "--include-module=account.account_config",
+        "--include-module=account.ApiWorker",
+        "--include-module=account.LoginWindow",
+        "--include-module=account.MultiStepFormWindow",
+        "--include-module=account.ModernAccountPage",
+        "--include-module=account.SoundManager",
+        "--include-module=account.ToggleSwitch",
+        "--include-module=account.subscription",
+        "--include-module=account.TeacherProfileManager",
+        "--include-module=account.uploadervideo",
+        "--include-module=account.client2",
 
         # ✅ تضمين PySide6 بشكل صريح
         "--include-package=PySide6",
