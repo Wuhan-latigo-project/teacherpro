@@ -107,7 +107,7 @@ def run_nuitka():
         PYTHON, "-m", "nuitka",
         "--standalone",
         "--enable-plugin=pyside6",
-        "--enable-plugin=tk-inter",  # ✅ دعم tkinter
+        "--enable-plugin=tk-inter",
         "--windows-console-mode=disable",
         "--windows-icon-from-ico=" + ICON_FILE,
         "--company-name=Latigo",
@@ -147,11 +147,11 @@ def run_nuitka():
         "--include-package=websockets",
 
         # ============================================================
-        # ✅ تضمين OpenCV (cv2) و MediaPipe
+        # ✅ OpenCV (cv2) و MediaPipe (تم التصحيح)
         # ============================================================
-        "--include-package=cv2",
-        "--include-package=opencv",
-        "--include-package=opencv_python",
+        "--include-package=cv2",              # ✅ فقط cv2
+        # "--include-package=opencv",          # ❌ محذوف
+        # "--include-package=opencv_python",   # ❌ محذوف
         "--include-package=mediapipe",
 
         # ✅ تضمين PySide6 بشكل صريح
