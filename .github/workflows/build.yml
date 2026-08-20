@@ -3,9 +3,6 @@ name: Build Latigo Student (Windows)
 on:
   push:
     branches: [main, master]
-    tags: ['v*']
-  pull_request:
-    branches: [main, master]
   workflow_dispatch:
 
 jobs:
@@ -43,9 +40,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install nuitka zstandard imageio pillow
+          pip install nuitka zstandard imageio pillow opencv-python mediapipe
 
-      - name: Build with Nuitka (No Obfuscation)
+      - name: Build with Nuitka
         run: python build.py
         env:
           NUITKA_JOBS: 2
@@ -57,17 +54,3 @@ jobs:
           name: LatigoStudent-Windows-Portable
           path: dist/main.dist/
           retention-days: 7
-
-      - name: Zip distribution
-        if: startsWith(github.ref, 'refs/tags/v')
-        shell: powershell
-        run: |
-          Compress-Archive -Path dist\main.dist\* -DestinationPath LatigoStudent-Windows.zip
-
-      - name: Upload Release Asset
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: LatigoStudent-Windows.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
