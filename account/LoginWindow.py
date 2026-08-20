@@ -1,16 +1,161 @@
 import sys
 import json
-from account_config import account_config
+from .account_config import account_config
 API_BASE_URL = account_config.API_BASE_URL
 import os
 import requests
-from PySide6.QtWidgets import *
-from PySide6.QtCore import *
-from PySide6.QtGui import *
 
-from ApiWorker import ApiWorker
-from SoundManager import sound_manager
-from account_config import account_config
+# ============================================================
+# ✅ استيراد صريح بدلاً من import *
+# ============================================================
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QStackedWidget,
+    QPushButton, QLabel, QFrame, QScrollArea, QSizePolicy, QMessageBox,
+    QProgressBar, QDialog, QLineEdit, QComboBox, QDialogButtonBox,
+    QTextEdit, QListWidget, QSpinBox, QCheckBox, QGroupBox, QTableWidget,
+    QTableWidgetItem, QHeaderView, QStatusBar, QSystemTrayIcon, QMenu,
+    QSlider, QFileDialog, QToolTip, QGraphicsOpacityEffect,
+    QGraphicsDropShadowEffect, QAction, QApplication, QFormLayout,
+    QGridLayout
+)
+
+from PySide6.QtCore import (
+    Qt, QTimer, QThreadPool, QPropertyAnimation, QEasingCurve,
+    QSize, QPoint, QRect, QEventLoop, QProcess, Signal, QObject,
+    QByteArray, QRectF, Property, QMetaObject, Q_ARG, QThread
+)
+
+from PySide6.QtGui import (
+    QFont, QPalette, QColor, QPixmap, QIcon, QKeySequence,
+    QPainter, QPen, QBrush, QLinearGradient, QPainterPath,
+    QImageReader, QFontDatabase, QShortcut, QAction as QGuiAction,
+    QImage, QMovie, QTransform, QClipboard
+)
+# ============================================================
+
+from .ApiWorker import ApiWorker
+from .SoundManager import sound_manager
+from .account_config import account_config
+
+# ========== TRANSLATIONS ==========
+TRANSLATIONS = {
+    'en': {
+        'window_title': 'Login - Latigo Platform',
+        'welcome_text': 'Welcome to ',
+        'brand_text': 'Latigo',
+        'subtitle': 'Sign in to your account to continue',
+        'email_label': 'Email',
+        'email_placeholder': 'Enter your email',
+        'password_label': 'Password',
+        'password_placeholder': 'Enter your password',
+        'remember_me': 'Remember me',
+        'login_btn': 'Sign In',
+        'login_loading': 'Signing in...',
+        'forgot_password': 'Forgot password?',
+        'or_text': 'or',
+        'signup_btn': 'Create New Account',
+        'footer_text': '© 2026 Latigo Platform. All rights reserved.',
+        'reset_password_title': 'Reset Password',
+        'reset_password_subtitle': 'Enter your email to receive a verification code',
+        'reset_email_label': 'Email Address',
+        'reset_email_placeholder': 'Enter your email',
+        'verification_label': 'Verification Code',
+        'verification_placeholder': '6-digit code',
+        'resend_btn': 'Resend',
+        'cooldown_text': 'Resend available in {seconds}s',
+        'new_password_label': 'New Password',
+        'new_password_placeholder': 'At least 6 characters',
+        'confirm_password_label': 'Confirm New Password',
+        'confirm_password_placeholder': 'Confirm your new password',
+        'send_code_btn': 'Send Code',
+        'send_code_loading': 'Sending...',
+        'reset_password_btn': 'Reset Password',
+        'reset_password_loading': 'Resetting...',
+        'back_to_login': '← Back to Login',
+        'status_sending': 'Sending code...',
+        'status_verifying': 'Verifying code...',
+        'status_resetting': 'Resetting password...',
+        'status_code_sent': 'Verification code sent to your email!',
+        'status_code_resent': 'New verification code sent!',
+        'status_code_verified': 'Code verified! Enter your new password.',
+        'status_error_email_not_found': 'Email not found. Please check your email address.',
+        'status_error_invalid_code': 'Invalid code. Please try again.',
+        'error_enter_email': 'Please enter your email address',
+        'error_valid_email': 'Please enter a valid email address',
+        'error_enter_password': 'Please enter email and password',
+        'error_password_min': 'Password must be at least 6 characters',
+        'error_passwords_match': 'Passwords do not match',
+        'error_verify_first': 'Please verify your code first',
+        'error_empty_code': 'Please enter a valid 6-digit code',
+        'error_no_session': 'No verification session. Please request a new code.',
+        'error_timeout': 'Connection timeout. Please try again.',
+        'error_connection': 'Cannot connect to server. Please check your connection.',
+        'error_ssl': 'SSL Certificate error. The server certificate is self-signed.\n\nPlease run with VERIFY_SSL=False or use a valid certificate.',
+        'error_connection_details': 'Unable to connect to server. Please check:\n- Server is running\n- IP/Port is correct\n- Firewall is not blocking',
+        'login_failed': 'Login Failed',
+        'login_invalid': 'Invalid login credentials',
+        'password_reset_success': 'Password reset successfully! You can now login with your new password.',
+        'password_reset_failed': 'Failed to reset password',
+    },
+    'ko': {
+        'window_title': '로그인 - Latigo 플랫폼',
+        'welcome_text': '에 오신 것을 환영합니다 ',
+        'brand_text': 'Latigo',
+        'subtitle': '계속하려면 계정에 로그인하세요',
+        'email_label': '이메일',
+        'email_placeholder': '이메일을 입력하세요',
+        'password_label': '비밀번호',
+        'password_placeholder': '비밀번호를 입력하세요',
+        'remember_me': '로그인 상태 유지',
+        'login_btn': '로그인',
+        'login_loading': '로그인 중...',
+        'forgot_password': '비밀번호를 잊으셨나요?',
+        'or_text': '또는',
+        'signup_btn': '새 계정 만들기',
+        'footer_text': '© 2026 Latigo 플랫폼. 모든 권리 보유.',
+        'reset_password_title': '비밀번호 재설정',
+        'reset_password_subtitle': '인증 코드를 받으려면 이메일을 입력하세요',
+        'reset_email_label': '이메일 주소',
+        'reset_email_placeholder': '이메일을 입력하세요',
+        'verification_label': '인증 코드',
+        'verification_placeholder': '6자리 코드',
+        'resend_btn': '재전송',
+        'cooldown_text': '{seconds}초 후 재전송 가능',
+        'new_password_label': '새 비밀번호',
+        'new_password_placeholder': '최소 6자 이상',
+        'confirm_password_label': '새 비밀번호 확인',
+        'confirm_password_placeholder': '새 비밀번호를 다시 입력하세요',
+        'send_code_btn': '코드 전송',
+        'send_code_loading': '전송 중...',
+        'reset_password_btn': '비밀번호 재설정',
+        'reset_password_loading': '재설정 중...',
+        'back_to_login': '← 로그인으로 돌아가기',
+        'status_sending': '코드 전송 중...',
+        'status_verifying': '코드 확인 중...',
+        'status_resetting': '비밀번호 재설정 중...',
+        'status_code_sent': '인증 코드가 이메일로 전송되었습니다!',
+        'status_code_resent': '새 인증 코드가 전송되었습니다!',
+        'status_code_verified': '코드 확인 완료! 새 비밀번호를 입력하세요.',
+        'status_error_email_not_found': '이메일을 찾을 수 없습니다. 이메일 주소를 확인하세요.',
+        'status_error_invalid_code': '잘못된 코드입니다. 다시 시도하세요.',
+        'error_enter_email': '이메일 주소를 입력하세요',
+        'error_valid_email': '유효한 이메일 주소를 입력하세요',
+        'error_enter_password': '이메일과 비밀번호를 입력하세요',
+        'error_password_min': '비밀번호는 최소 6자 이상이어야 합니다',
+        'error_passwords_match': '비밀번호가 일치하지 않습니다',
+        'error_verify_first': '먼저 코드를 인증하세요',
+        'error_empty_code': '유효한 6자리 코드를 입력하세요',
+        'error_no_session': '인증 세션이 없습니다. 새 코드를 요청하세요.',
+        'error_timeout': '연결 시간이 초과되었습니다. 다시 시도하세요.',
+        'error_connection': '서버에 연결할 수 없습니다. 연결을 확인하세요.',
+        'error_ssl': 'SSL 인증서 오류입니다. 서버 인증서가 자체 서명되었습니다.\n\nVERIFY_SSL=False로 실행하거나 유효한 인증서를 사용하세요.',
+        'error_connection_details': '서버에 연결할 수 없습니다. 다음을 확인하세요:\n- 서버가 실행 중인지\n- IP/Port가 올바른지\n- 방화벽이 차단하지 않는지',
+        'login_failed': '로그인 실패',
+        'login_invalid': '잘못된 로그인 정보',
+        'password_reset_success': '비밀번호가 성공적으로 재설정되었습니다! 새 비밀번호로 로그인하세요.',
+        'password_reset_failed': '비밀번호 재설정 실패',
+    }
+}
 
 
 class GradientTextLabel(QLabel):
@@ -51,6 +196,9 @@ class LoginWindow(QWidget):
         super().__init__()
         self.main_window = main_window
         
+        # Current language
+        self.current_language = 'en'
+        
         # Variables for window dragging
         self.dragging = False
         self.drag_position = None
@@ -69,7 +217,139 @@ class LoginWindow(QWidget):
         
         # Create a main container with white background and smooth corners
         self.setup_ui()
+        self.update_all_texts()
+    
+    def tr(self, key, **kwargs):
+        """Get translated text"""
+        text = TRANSLATIONS[self.current_language].get(key, key)
+        if kwargs:
+            return text.format(**kwargs)
+        return text
+    
+    def toggle_language(self):
+        """Toggle between English and Korean"""
+        self.current_language = 'ko' if self.current_language == 'en' else 'en'
+        self.lang_btn.setText('English' if self.current_language == 'ko' else '한국어')
+        self.update_all_texts()
+    
+    def update_all_texts(self):
+        """Update all UI text"""
+        # Window title (not visible but for completeness)
+        self.setWindowTitle(self.tr('window_title'))
         
+        # Login view
+        self.welcome_label.setText(
+            f"{self.tr('welcome_text')}{self.tr('brand_text')}"
+        )
+        # Rebuild gradient text - we need to handle this carefully
+        # Since GradientTextLabel doesn't have a setText method, we recreate it
+        # We'll handle this by rebuilding the login view header
+        self.rebuild_login_header()
+        
+        self.subtitle_label.setText(self.tr('subtitle'))
+        self.email_label.setText(self.tr('email_label'))
+        self.email_input.setPlaceholderText(self.tr('email_placeholder'))
+        self.password_label.setText(self.tr('password_label'))
+        self.password_input.setPlaceholderText(self.tr('password_placeholder'))
+        self.remember_checkbox.setText(self.tr('remember_me'))
+        self.login_btn.setText(self.tr('login_btn'))
+        self.forgot_password_btn.setText(self.tr('forgot_password'))
+        self.or_label.setText(self.tr('or_text'))
+        self.signup_btn.setText(self.tr('signup_btn'))
+        self.footer_label.setText(self.tr('footer_text'))
+        
+        # Forgot password view
+        self.back_to_login_btn.setText(self.tr('back_to_login'))
+        self.reset_title_label.setText(self.tr('reset_password_title'))
+        self.reset_subtitle_label.setText(self.tr('reset_password_subtitle'))
+        self.reset_email_label.setText(self.tr('reset_email_label'))
+        self.reset_email_input.setPlaceholderText(self.tr('reset_email_placeholder'))
+        self.verification_label.setText(self.tr('verification_label'))
+        self.reset_code_input.setPlaceholderText(self.tr('verification_placeholder'))
+        self.resend_code_btn.setText(self.tr('resend_btn'))
+        self.new_pass_label.setText(self.tr('new_password_label'))
+        self.new_password_input.setPlaceholderText(self.tr('new_password_placeholder'))
+        self.confirm_pass_label.setText(self.tr('confirm_password_label'))
+        self.confirm_password_input.setPlaceholderText(self.tr('confirm_password_placeholder'))
+        self.send_code_btn.setText(self.tr('send_code_btn'))
+        self.reset_password_btn.setText(self.tr('reset_password_btn'))
+    
+    def rebuild_login_header(self):
+        """Rebuild the login header with current language"""
+        # Remove old header widgets
+        if hasattr(self, 'welcome_label') and self.welcome_label:
+            self.welcome_label.deleteLater()
+        if hasattr(self, 'subtitle_label') and self.subtitle_label:
+            self.subtitle_label.deleteLater()
+        
+        # Find header container in login view
+        header_container = self.login_view.findChild(QWidget, "loginHeaderContainer")
+        if not header_container:
+            # Try to find by traversing
+            for child in self.login_view.children():
+                if isinstance(child, QWidget) and child.layout():
+                    # Check if this is the header container (contains welcome label)
+                    for i in range(child.layout().count()):
+                        item = child.layout().itemAt(i)
+                        if item and item.widget() and isinstance(item.widget(), GradientTextLabel):
+                            header_container = child
+                            break
+                    if header_container:
+                        break
+        
+        if not header_container:
+            return
+        
+        # Clear existing widgets in header
+        layout = header_container.layout()
+        if layout:
+            while layout.count():
+                item = layout.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
+        
+        # Recreate welcome label
+        welcome_label = GradientTextLabel([
+            (self.tr('welcome_text'), [(0.0, "#ffffff"), (0.5, "#7ab8d4"), (1.0, "#c8e0f0")]),
+            (self.tr('brand_text'), [(0.0, "#f5a623"), (1.0, "#f7c948")])
+        ])
+        welcome_label.setAlignment(Qt.AlignCenter)
+        welcome_label.setStyleSheet("""
+            QLabel {
+                font-size: 34px;
+                font-weight: 700;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial;
+                background: transparent;
+                padding: 0px;
+                margin: 0px;
+            }
+        """)
+        layout.addWidget(welcome_label)
+        
+        # Recreate subtitle
+        subtitle_label = QLabel(self.tr('subtitle'))
+        subtitle_label.setAlignment(Qt.AlignCenter)
+        subtitle_label.setStyleSheet("""
+            QLabel {
+                font-size: 16px;
+                font-weight: 400;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial;
+                color: #6e6e73;
+                background: transparent;
+                padding: 0px;
+                margin: 0px 0px 3px 0px;
+                letter-spacing: -0.2px;
+            }
+        """)
+        layout.addWidget(subtitle_label)
+        
+        # Store references
+        self.welcome_label = welcome_label
+        self.subtitle_label = subtitle_label
+        
+        # Update layout
+        layout.update()
+    
     def setup_ui(self):
         self.setStyleSheet("background: transparent;")
         # Main layout with proper margins
@@ -98,7 +378,7 @@ class LoginWindow(QWidget):
         container_layout.setContentsMargins(40, 0, 40, 20)
         container_layout.setSpacing(3)
 
-        # Create a top bar with a fixed spacer and close button
+        # Create a top bar with a fixed spacer, language toggle, and close button
         top_bar = QWidget()
         top_bar.setAttribute(Qt.WA_TranslucentBackground, True)
         top_bar.setStyleSheet("background: transparent;")
@@ -114,6 +394,28 @@ class LoginWindow(QWidget):
 
         top_bar_layout.addStretch()
 
+        # Language toggle button
+        self.lang_btn = QPushButton("한국어")
+        self.lang_btn.setCursor(Qt.PointingHandCursor)
+        self.lang_btn.setFixedSize(50, 28)
+        self.lang_btn.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                border: 1px solid #d2d2d7;
+                border-radius: 6px;
+                color: #1d1d1f;
+                font-size: 11px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background-color: #f5f5f7;
+                border-color: #0071e3;
+            }
+        """)
+        self.lang_btn.clicked.connect(self.toggle_language)
+        top_bar_layout.addWidget(self.lang_btn)
+
+        # Close button
         self.close_btn = QPushButton("x")
         self.close_btn.setCursor(Qt.PointingHandCursor)
         self.close_btn.setFixedSize(28, 28)
@@ -149,9 +451,9 @@ class LoginWindow(QWidget):
         container_layout.addWidget(self.stacked_widget)
 
         # Footer
-        footer_label = QLabel("© 2026 Latigo Platform. All rights reserved.")
-        footer_label.setAlignment(Qt.AlignCenter)
-        footer_label.setStyleSheet("""
+        self.footer_label = QLabel(self.tr('footer_text'))
+        self.footer_label.setAlignment(Qt.AlignCenter)
+        self.footer_label.setStyleSheet("""
             QLabel {
                 color: #86868b;
                 font-size: 12px;
@@ -160,15 +462,13 @@ class LoginWindow(QWidget):
                 padding: 3px 0px 0px 0px;
             }
         """)
-        container_layout.addWidget(footer_label)
+        container_layout.addWidget(self.footer_label)
 
         # Add the container to the main layout
         layout.addWidget(container)
 
         # Set fixed size
         self.setFixedSize(500, 520)
-        
-
     
     def create_login_view(self):
         """Create the login view widget"""
@@ -180,17 +480,18 @@ class LoginWindow(QWidget):
 
         # Apple-style header
         header_container = QWidget()
+        header_container.setObjectName("loginHeaderContainer")
         header_container.setStyleSheet("background: transparent;")
         header_layout = QVBoxLayout(header_container)
         header_layout.setSpacing(1)
         header_layout.setContentsMargins(0, 0, 0, 0)
         
-        welcome_label = GradientTextLabel([
-            ("welcom to ", [(0.0, "#ffffff"), (0.5, "#7ab8d4"), (1.0, "#c8e0f0")]),
-            ("paltigo", [(0.0, "#f5a623"), (1.0, "#f7c948")])
+        self.welcome_label = GradientTextLabel([
+            (self.tr('welcome_text'), [(0.0, "#ffffff"), (0.5, "#7ab8d4"), (1.0, "#c8e0f0")]),
+            (self.tr('brand_text'), [(0.0, "#f5a623"), (1.0, "#f7c948")])
         ])
-        welcome_label.setAlignment(Qt.AlignCenter)
-        welcome_label.setStyleSheet("""
+        self.welcome_label.setAlignment(Qt.AlignCenter)
+        self.welcome_label.setStyleSheet("""
             QLabel {
                 font-size: 34px;
                 font-weight: 700;
@@ -200,11 +501,11 @@ class LoginWindow(QWidget):
                 margin: 0px;
             }
         """)
-        header_layout.addWidget(welcome_label)
+        header_layout.addWidget(self.welcome_label)
 
-        subtitle_label = QLabel("Sign in to your account to continue")
-        subtitle_label.setAlignment(Qt.AlignCenter)
-        subtitle_label.setStyleSheet("""
+        self.subtitle_label = QLabel(self.tr('subtitle'))
+        self.subtitle_label.setAlignment(Qt.AlignCenter)
+        self.subtitle_label.setStyleSheet("""
             QLabel {
                 font-size: 16px;
                 font-weight: 400;
@@ -216,7 +517,7 @@ class LoginWindow(QWidget):
                 letter-spacing: -0.2px;
             }
         """)
-        header_layout.addWidget(subtitle_label)
+        header_layout.addWidget(self.subtitle_label)
         
         layout.addWidget(header_container)
 
@@ -262,8 +563,8 @@ class LoginWindow(QWidget):
         email_container_layout.setContentsMargins(0, 0, 0, 0)
         email_container_layout.setSpacing(3)
         
-        email_label = QLabel("Email")
-        email_label.setStyleSheet("""
+        self.email_label = QLabel(self.tr('email_label'))
+        self.email_label.setStyleSheet("""
             QLabel {
                 font-weight: 500;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial;
@@ -273,10 +574,10 @@ class LoginWindow(QWidget):
                 padding-left: 2px;
             }
         """)
-        email_container_layout.addWidget(email_label)
+        email_container_layout.addWidget(self.email_label)
         
         self.email_input = QLineEdit()
-        self.email_input.setPlaceholderText("Enter your email")
+        self.email_input.setPlaceholderText(self.tr('email_placeholder'))
         self.email_input.setFixedHeight(40)
         self.email_input.setStyleSheet("""
             QLineEdit {
@@ -307,8 +608,8 @@ class LoginWindow(QWidget):
         password_container_layout.setContentsMargins(0, 0, 0, 0)
         password_container_layout.setSpacing(3)
         
-        password_label = QLabel("Password")
-        password_label.setStyleSheet("""
+        self.password_label = QLabel(self.tr('password_label'))
+        self.password_label.setStyleSheet("""
             QLabel {
                 font-weight: 500;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial;
@@ -318,10 +619,10 @@ class LoginWindow(QWidget):
                 padding-left: 2px;
             }
         """)
-        password_container_layout.addWidget(password_label)
+        password_container_layout.addWidget(self.password_label)
         
         self.password_input = QLineEdit()
-        self.password_input.setPlaceholderText("Enter your password")
+        self.password_input.setPlaceholderText(self.tr('password_placeholder'))
         self.password_input.setEchoMode(QLineEdit.Password)
         self.password_input.setFixedHeight(40)
         self.password_input.setStyleSheet("""
@@ -353,7 +654,7 @@ class LoginWindow(QWidget):
         remember_layout.setContentsMargins(0, 0, 0, 0)
         remember_layout.setSpacing(0)
         
-        self.remember_checkbox = QCheckBox("Remember me")
+        self.remember_checkbox = QCheckBox(self.tr('remember_me'))
         self.remember_checkbox.setStyleSheet("""
             QCheckBox {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial;
@@ -383,7 +684,7 @@ class LoginWindow(QWidget):
         form_layout.addWidget(remember_container)
 
         # Login button
-        self.login_btn = QPushButton("Sign In")
+        self.login_btn = QPushButton(self.tr('login_btn'))
         self.login_btn.setFixedHeight(40)
         self.login_btn.setCursor(Qt.PointingHandCursor)
         self.login_btn.setStyleSheet("""
@@ -411,7 +712,7 @@ class LoginWindow(QWidget):
         form_layout.addWidget(self.login_btn)
 
         # Forgot password button
-        self.forgot_password_btn = QPushButton("Forgot password?")
+        self.forgot_password_btn = QPushButton(self.tr('forgot_password'))
         self.forgot_password_btn.setCursor(Qt.PointingHandCursor)
         self.forgot_password_btn.setStyleSheet("""
             QPushButton {
@@ -443,9 +744,9 @@ class LoginWindow(QWidget):
         line_left.setFixedHeight(1)
         line_left.setStyleSheet("background-color: #d2d2d7;")
         
-        or_label = QLabel("or")
-        or_label.setAlignment(Qt.AlignCenter)
-        or_label.setStyleSheet("""
+        self.or_label = QLabel(self.tr('or_text'))
+        self.or_label.setAlignment(Qt.AlignCenter)
+        self.or_label.setStyleSheet("""
             QLabel {
                 color: #86868b;
                 font-size: 13px;
@@ -462,13 +763,13 @@ class LoginWindow(QWidget):
         line_right.setStyleSheet("background-color: #d2d2d7;")
         
         separator_layout.addWidget(line_left, 1)
-        separator_layout.addWidget(or_label, 0)
+        separator_layout.addWidget(self.or_label, 0)
         separator_layout.addWidget(line_right, 1)
         
         form_layout.addWidget(separator_container)
 
         # Sign up button
-        self.signup_btn = QPushButton("Create New Account")
+        self.signup_btn = QPushButton(self.tr('signup_btn'))
         self.signup_btn.setFixedHeight(40)
         self.signup_btn.setCursor(Qt.PointingHandCursor)
         self.signup_btn.setStyleSheet("""
@@ -516,7 +817,7 @@ class LoginWindow(QWidget):
         back_row = QHBoxLayout()
         back_row.setContentsMargins(0, 0, 0, 0)
         
-        self.back_to_login_btn = QPushButton("← Back to Login")
+        self.back_to_login_btn = QPushButton(self.tr('back_to_login'))
         self.back_to_login_btn.setCursor(Qt.PointingHandCursor)
         self.back_to_login_btn.setStyleSheet("""
             QPushButton {
@@ -538,9 +839,9 @@ class LoginWindow(QWidget):
         back_row.addStretch()
         header_layout.addLayout(back_row)
         
-        title_label = QLabel("Reset Password")
-        title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("""
+        self.reset_title_label = QLabel(self.tr('reset_password_title'))
+        self.reset_title_label.setAlignment(Qt.AlignCenter)
+        self.reset_title_label.setStyleSheet("""
             QLabel {
                 font-size: 28px;
                 font-weight: 700;
@@ -552,11 +853,11 @@ class LoginWindow(QWidget):
                 margin: 0px;
             }
         """)
-        header_layout.addWidget(title_label)
+        header_layout.addWidget(self.reset_title_label)
 
-        subtitle_label = QLabel("Enter your email to receive a verification code")
-        subtitle_label.setAlignment(Qt.AlignCenter)
-        subtitle_label.setStyleSheet("""
+        self.reset_subtitle_label = QLabel(self.tr('reset_password_subtitle'))
+        self.reset_subtitle_label.setAlignment(Qt.AlignCenter)
+        self.reset_subtitle_label.setStyleSheet("""
             QLabel {
                 font-size: 14px;
                 font-weight: 400;
@@ -567,7 +868,7 @@ class LoginWindow(QWidget):
                 margin: 0px 0px 10px 0px;
             }
         """)
-        header_layout.addWidget(subtitle_label)
+        header_layout.addWidget(self.reset_subtitle_label)
         
         layout.addWidget(header_container)
 
@@ -595,8 +896,8 @@ class LoginWindow(QWidget):
         reset_email_layout.setContentsMargins(0, 0, 0, 0)
         reset_email_layout.setSpacing(3)
         
-        reset_email_label = QLabel("Email Address")
-        reset_email_label.setStyleSheet("""
+        self.reset_email_label = QLabel(self.tr('reset_email_label'))
+        self.reset_email_label.setStyleSheet("""
             QLabel {
                 font-weight: 500;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial;
@@ -606,10 +907,10 @@ class LoginWindow(QWidget):
                 padding-left: 2px;
             }
         """)
-        reset_email_layout.addWidget(reset_email_label)
+        reset_email_layout.addWidget(self.reset_email_label)
         
         self.reset_email_input = QLineEdit()
-        self.reset_email_input.setPlaceholderText("Enter your email")
+        self.reset_email_input.setPlaceholderText(self.tr('reset_email_placeholder'))
         self.reset_email_input.setFixedHeight(40)
         self.reset_email_input.setStyleSheet("""
             QLineEdit {
@@ -640,8 +941,8 @@ class LoginWindow(QWidget):
         verification_layout.setContentsMargins(0, 0, 0, 0)
         verification_layout.setSpacing(3)
         
-        verification_label = QLabel("Verification Code")
-        verification_label.setStyleSheet("""
+        self.verification_label = QLabel(self.tr('verification_label'))
+        self.verification_label.setStyleSheet("""
             QLabel {
                 font-weight: 500;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial;
@@ -651,7 +952,7 @@ class LoginWindow(QWidget):
                 padding-left: 2px;
             }
         """)
-        verification_layout.addWidget(verification_label)
+        verification_layout.addWidget(self.verification_label)
         
         code_container = QWidget()
         code_container.setStyleSheet("background: transparent;")
@@ -660,7 +961,7 @@ class LoginWindow(QWidget):
         code_layout.setSpacing(8)
         
         self.reset_code_input = QLineEdit()
-        self.reset_code_input.setPlaceholderText("6-digit code")
+        self.reset_code_input.setPlaceholderText(self.tr('verification_placeholder'))
         self.reset_code_input.setFixedHeight(40)
         self.reset_code_input.setMaxLength(6)
         self.reset_code_input.setStyleSheet("""
@@ -684,7 +985,7 @@ class LoginWindow(QWidget):
         self.reset_code_input.textChanged.connect(self.on_reset_code_changed)
         code_layout.addWidget(self.reset_code_input)
         
-        self.resend_code_btn = QPushButton("Resend")
+        self.resend_code_btn = QPushButton(self.tr('resend_btn'))
         self.resend_code_btn.setFixedHeight(40)
         self.resend_code_btn.setFixedWidth(80)
         self.resend_code_btn.setCursor(Qt.PointingHandCursor)
@@ -731,8 +1032,8 @@ class LoginWindow(QWidget):
         password_reset_layout.setContentsMargins(0, 0, 0, 0)
         password_reset_layout.setSpacing(3)
         
-        new_pass_label = QLabel("New Password")
-        new_pass_label.setStyleSheet("""
+        self.new_pass_label = QLabel(self.tr('new_password_label'))
+        self.new_pass_label.setStyleSheet("""
             QLabel {
                 font-weight: 500;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial;
@@ -742,10 +1043,10 @@ class LoginWindow(QWidget):
                 padding-left: 2px;
             }
         """)
-        password_reset_layout.addWidget(new_pass_label)
+        password_reset_layout.addWidget(self.new_pass_label)
         
         self.new_password_input = QLineEdit()
-        self.new_password_input.setPlaceholderText("At least 6 characters")
+        self.new_password_input.setPlaceholderText(self.tr('new_password_placeholder'))
         self.new_password_input.setEchoMode(QLineEdit.Password)
         self.new_password_input.setFixedHeight(40)
         self.new_password_input.setStyleSheet("""
@@ -768,8 +1069,8 @@ class LoginWindow(QWidget):
         """)
         password_reset_layout.addWidget(self.new_password_input)
         
-        confirm_pass_label = QLabel("Confirm New Password")
-        confirm_pass_label.setStyleSheet("""
+        self.confirm_pass_label = QLabel(self.tr('confirm_password_label'))
+        self.confirm_pass_label.setStyleSheet("""
             QLabel {
                 font-weight: 500;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial;
@@ -779,10 +1080,10 @@ class LoginWindow(QWidget):
                 padding-left: 2px;
             }
         """)
-        password_reset_layout.addWidget(confirm_pass_label)
+        password_reset_layout.addWidget(self.confirm_pass_label)
         
         self.confirm_password_input = QLineEdit()
-        self.confirm_password_input.setPlaceholderText("Confirm your new password")
+        self.confirm_password_input.setPlaceholderText(self.tr('confirm_password_placeholder'))
         self.confirm_password_input.setEchoMode(QLineEdit.Password)
         self.confirm_password_input.setFixedHeight(40)
         self.confirm_password_input.setStyleSheet("""
@@ -814,7 +1115,7 @@ class LoginWindow(QWidget):
         form_layout.addWidget(self.reset_status_label)
 
         # Send Code button
-        self.send_code_btn = QPushButton("Send Code")
+        self.send_code_btn = QPushButton(self.tr('send_code_btn'))
         self.send_code_btn.setFixedHeight(40)
         self.send_code_btn.setCursor(Qt.PointingHandCursor)
         self.send_code_btn.setStyleSheet("""
@@ -838,7 +1139,7 @@ class LoginWindow(QWidget):
         form_layout.addWidget(self.send_code_btn)
 
         # Reset Password button (hidden initially)
-        self.reset_password_btn = QPushButton("Reset Password")
+        self.reset_password_btn = QPushButton(self.tr('reset_password_btn'))
         self.reset_password_btn.setFixedHeight(40)
         self.reset_password_btn.setCursor(Qt.PointingHandCursor)
         self.reset_password_btn.setVisible(False)
@@ -914,16 +1215,16 @@ class LoginWindow(QWidget):
         
         if not email:
             sound_manager.play_error()
-            QMessageBox.warning(self, "Error", "Please enter your email address")
+            QMessageBox.warning(self, self.tr('error_enter_email'), self.tr('error_enter_email'))
             return
         
         if "@" not in email or "." not in email:
             sound_manager.play_error()
-            QMessageBox.warning(self, "Error", "Please enter a valid email address")
+            QMessageBox.warning(self, self.tr('error_valid_email'), self.tr('error_valid_email'))
             return
         
         self.send_code_btn.setEnabled(False)
-        self.send_code_btn.setText("Sending...")
+        self.send_code_btn.setText(self.tr('send_code_loading'))
         self.reset_status_label.setText("")
         self.reset_status_label.setStyleSheet("color: #6e6e73; font-size: 13px; background: transparent; padding: 5px;")
         
@@ -938,7 +1239,7 @@ class LoginWindow(QWidget):
                     self.reset_email = email
                     self.reset_verification_id = data.get("data", {}).get("verification_id")
                     
-                    self.reset_status_label.setText("Verification code sent to your email!")
+                    self.reset_status_label.setText(self.tr('status_code_sent'))
                     self.reset_status_label.setStyleSheet("color: #28a745; font-size: 13px; background: transparent; padding: 5px;")
                     
                     # Show verification input
@@ -957,13 +1258,13 @@ class LoginWindow(QWidget):
                     self.reset_status_label.setText(f"Error: {error_msg}")
                     self.reset_status_label.setStyleSheet("color: #dc3545; font-size: 13px; background: transparent; padding: 5px;")
                     self.send_code_btn.setEnabled(True)
-                    self.send_code_btn.setText("Send Code")
+                    self.send_code_btn.setText(self.tr('send_code_btn'))
             elif response.status_code == 404:
                 sound_manager.play_error()
-                self.reset_status_label.setText("Email not found. Please check your email address.")
+                self.reset_status_label.setText(self.tr('status_error_email_not_found'))
                 self.reset_status_label.setStyleSheet("color: #dc3545; font-size: 13px; background: transparent; padding: 5px;")
                 self.send_code_btn.setEnabled(True)
-                self.send_code_btn.setText("Send Code")
+                self.send_code_btn.setText(self.tr('send_code_btn'))
             else:
                 sound_manager.play_error()
                 data = response.json()
@@ -971,26 +1272,26 @@ class LoginWindow(QWidget):
                 self.reset_status_label.setText(f"Error: {error_msg}")
                 self.reset_status_label.setStyleSheet("color: #dc3545; font-size: 13px; background: transparent; padding: 5px;")
                 self.send_code_btn.setEnabled(True)
-                self.send_code_btn.setText("Send Code")
+                self.send_code_btn.setText(self.tr('send_code_btn'))
                 
         except requests.exceptions.Timeout:
             sound_manager.play_error()
-            self.reset_status_label.setText("Connection timeout. Please try again.")
+            self.reset_status_label.setText(self.tr('error_timeout'))
             self.reset_status_label.setStyleSheet("color: #dc3545; font-size: 13px; background: transparent; padding: 5px;")
             self.send_code_btn.setEnabled(True)
-            self.send_code_btn.setText("Send Code")
+            self.send_code_btn.setText(self.tr('send_code_btn'))
         except requests.exceptions.ConnectionError:
             sound_manager.play_error()
-            self.reset_status_label.setText("Cannot connect to server. Please check your connection.")
+            self.reset_status_label.setText(self.tr('error_connection'))
             self.reset_status_label.setStyleSheet("color: #dc3545; font-size: 13px; background: transparent; padding: 5px;")
             self.send_code_btn.setEnabled(True)
-            self.send_code_btn.setText("Send Code")
+            self.send_code_btn.setText(self.tr('send_code_btn'))
         except Exception as e:
             sound_manager.play_error()
             self.reset_status_label.setText(f"Error: {str(e)}")
             self.reset_status_label.setStyleSheet("color: #dc3545; font-size: 13px; background: transparent; padding: 5px;")
             self.send_code_btn.setEnabled(True)
-            self.send_code_btn.setText("Send Code")
+            self.send_code_btn.setText(self.tr('send_code_btn'))
     
     def update_cooldown(self):
         """Update cooldown timer display"""
@@ -1001,7 +1302,7 @@ class LoginWindow(QWidget):
             self.resend_code_btn.setEnabled(True)
             self.cooldown_label.setText("")
         else:
-            self.cooldown_label.setText(f"Resend available in {self.cooldown_seconds}s")
+            self.cooldown_label.setText(self.tr('cooldown_text', seconds=self.cooldown_seconds))
     
     def resend_reset_code(self):
         """Resend the verification code"""
@@ -1009,7 +1310,7 @@ class LoginWindow(QWidget):
             return
         
         self.resend_code_btn.setEnabled(False)
-        self.reset_status_label.setText("Resending code...")
+        self.reset_status_label.setText(self.tr('status_sending'))
         self.reset_status_label.setStyleSheet("color: #6e6e73; font-size: 13px; background: transparent; padding: 5px;")
         
         try:
@@ -1022,7 +1323,7 @@ class LoginWindow(QWidget):
                     sound_manager.play_success()
                     self.reset_verification_id = data.get("data", {}).get("verification_id")
                     
-                    self.reset_status_label.setText("New verification code sent!")
+                    self.reset_status_label.setText(self.tr('status_code_resent'))
                     self.reset_status_label.setStyleSheet("color: #28a745; font-size: 13px; background: transparent; padding: 5px;")
                     
                     # Start cooldown
@@ -1059,16 +1360,16 @@ class LoginWindow(QWidget):
         code = self.reset_code_input.text().strip()
         
         if len(code) != 6 or not code.isdigit():
-            self.reset_status_label.setText("Please enter a valid 6-digit code")
+            self.reset_status_label.setText(self.tr('error_empty_code'))
             self.reset_status_label.setStyleSheet("color: #dc3545; font-size: 13px; background: transparent; padding: 5px;")
             return
         
         if not self.reset_verification_id:
-            self.reset_status_label.setText("No verification session. Please request a new code.")
+            self.reset_status_label.setText(self.tr('error_no_session'))
             self.reset_status_label.setStyleSheet("color: #dc3545; font-size: 13px; background: transparent; padding: 5px;")
             return
         
-        self.reset_status_label.setText("Verifying code...")
+        self.reset_status_label.setText(self.tr('status_verifying'))
         self.reset_status_label.setStyleSheet("color: #6e6e73; font-size: 13px; background: transparent; padding: 5px;")
         
         try:
@@ -1084,7 +1385,7 @@ class LoginWindow(QWidget):
                 if data.get("success"):
                     sound_manager.play_success()
                     self.is_reset_verified = True
-                    self.reset_status_label.setText("Code verified! Enter your new password.")
+                    self.reset_status_label.setText(self.tr('status_code_verified'))
                     self.reset_status_label.setStyleSheet("color: #28a745; font-size: 13px; background: transparent; padding: 5px;")
                     
                     # Show password fields
@@ -1093,7 +1394,7 @@ class LoginWindow(QWidget):
                     self.resend_code_btn.setEnabled(False)
                 else:
                     sound_manager.play_error()
-                    error_msg = data.get("error", "Verification failed")
+                    error_msg = data.get("error", self.tr('status_error_invalid_code'))
                     attempts_data = data.get("data", {})
                     if attempts_data.get("attempts_left") is not None:
                         error_msg = f"{error_msg} ({attempts_data.get('attempts_left')} attempts left)"
@@ -1104,7 +1405,7 @@ class LoginWindow(QWidget):
             elif response.status_code == 401:
                 sound_manager.play_error()
                 data = response.json()
-                error_msg = data.get("error", "Invalid code")
+                error_msg = data.get("error", self.tr('status_error_invalid_code'))
                 attempts_data = data.get("data", {})
                 if attempts_data.get("attempts_left") is not None:
                     error_msg = f"{error_msg} ({attempts_data.get('attempts_left')} attempts left)"
@@ -1131,27 +1432,27 @@ class LoginWindow(QWidget):
         
         if not new_password:
             sound_manager.play_error()
-            QMessageBox.warning(self, "Error", "Please enter a new password")
+            QMessageBox.warning(self, self.tr('error_enter_password'), self.tr('error_enter_password'))
             return
         
         if len(new_password) < 6:
             sound_manager.play_error()
-            QMessageBox.warning(self, "Error", "Password must be at least 6 characters")
+            QMessageBox.warning(self, self.tr('error_password_min'), self.tr('error_password_min'))
             return
         
         if new_password != confirm_password:
             sound_manager.play_error()
-            QMessageBox.warning(self, "Error", "Passwords do not match")
+            QMessageBox.warning(self, self.tr('error_passwords_match'), self.tr('error_passwords_match'))
             return
         
         if not self.is_reset_verified or not self.reset_verification_id:
             sound_manager.play_error()
-            QMessageBox.warning(self, "Error", "Please verify your code first")
+            QMessageBox.warning(self, self.tr('error_verify_first'), self.tr('error_verify_first'))
             return
         
         self.reset_password_btn.setEnabled(False)
-        self.reset_password_btn.setText("Resetting...")
-        self.reset_status_label.setText("Resetting password...")
+        self.reset_password_btn.setText(self.tr('reset_password_loading'))
+        self.reset_status_label.setText(self.tr('status_resetting'))
         self.reset_status_label.setStyleSheet("color: #6e6e73; font-size: 13px; background: transparent; padding: 5px;")
         
         try:
@@ -1167,7 +1468,7 @@ class LoginWindow(QWidget):
                 data = response.json()
                 if data.get("success"):
                     sound_manager.play_success()
-                    QMessageBox.information(self, "Success", "Password reset successfully! You can now login with your new password.")
+                    QMessageBox.information(self, self.tr('password_reset_success'), self.tr('password_reset_success'))
                     
                     # Return to login view
                     self.show_login_view()
@@ -1176,11 +1477,11 @@ class LoginWindow(QWidget):
                     self.email_input.setText(self.reset_email)
                 else:
                     sound_manager.play_error()
-                    error_msg = data.get("error", "Failed to reset password")
+                    error_msg = data.get("error", self.tr('password_reset_failed'))
                     self.reset_status_label.setText(f"Error: {error_msg}")
                     self.reset_status_label.setStyleSheet("color: #dc3545; font-size: 13px; background: transparent; padding: 5px;")
                     self.reset_password_btn.setEnabled(True)
-                    self.reset_password_btn.setText("Reset Password")
+                    self.reset_password_btn.setText(self.tr('reset_password_btn'))
             else:
                 sound_manager.play_error()
                 data = response.json()
@@ -1188,14 +1489,14 @@ class LoginWindow(QWidget):
                 self.reset_status_label.setText(f"Error: {error_msg}")
                 self.reset_status_label.setStyleSheet("color: #dc3545; font-size: 13px; background: transparent; padding: 5px;")
                 self.reset_password_btn.setEnabled(True)
-                self.reset_password_btn.setText("Reset Password")
+                self.reset_password_btn.setText(self.tr('reset_password_btn'))
                 
         except Exception as e:
             sound_manager.play_error()
             self.reset_status_label.setText(f"Error: {str(e)}")
             self.reset_status_label.setStyleSheet("color: #dc3545; font-size: 13px; background: transparent; padding: 5px;")
             self.reset_password_btn.setEnabled(True)
-            self.reset_password_btn.setText("Reset Password")
+            self.reset_password_btn.setText(self.tr('reset_password_btn'))
     
     def on_reset_code_changed(self, text):
         """Handle code input change - auto-verify when 6 digits entered"""
@@ -1225,11 +1526,11 @@ class LoginWindow(QWidget):
 
         if not email or not password:
             sound_manager.play_error()
-            QMessageBox.warning(self, "Error", "Please enter email and password")
+            QMessageBox.warning(self, self.tr('error_enter_password'), self.tr('error_enter_password'))
             return
 
         # Disable button and show loading
-        self.login_btn.setText("Signing in...")
+        self.login_btn.setText(self.tr('login_loading'))
         self.login_btn.setEnabled(False)
 
         # Create worker for login
@@ -1322,8 +1623,8 @@ class LoginWindow(QWidget):
                 
             else:
                 sound_manager.play_error()
-                QMessageBox.warning(self, "Login Failed", 
-                                  response_data.get("error", "Invalid login credentials"))
+                QMessageBox.warning(self, self.tr('login_failed'), 
+                                  response_data.get("error", self.tr('login_invalid')))
         else:
             sound_manager.play_error()
             try:
@@ -1331,24 +1632,24 @@ class LoginWindow(QWidget):
                 error_msg = error_data.get("error", f"Server error: {response.status_code}")
             except:
                 error_msg = f"Server error: {response.status_code}"
-            QMessageBox.warning(self, "Login Failed", error_msg)
+            QMessageBox.warning(self, self.tr('login_failed'), error_msg)
     
     def on_login_error(self, error_msg):
         """Handle connection errors"""
         sound_manager.play_error()
         
         if "SSL" in str(error_msg):
-            message = "SSL Certificate error. The server certificate is self-signed.\n\nPlease run with VERIFY_SSL=False or use a valid certificate."
+            message = self.tr('error_ssl')
         elif "timeout" in str(error_msg).lower():
-            message = "Connection timeout. Please check your internet connection."
+            message = self.tr('error_timeout')
         elif "connection" in str(error_msg).lower():
-            message = "Unable to connect to server. Please check:\n- Server is running\n- IP/Port is correct\n- Firewall is not blocking"
+            message = self.tr('error_connection_details')
         else:
             message = f"Connection error: {error_msg}"
         
-        QMessageBox.warning(self, "Connection Error", message)
+        QMessageBox.warning(self, self.tr('login_failed'), message)
     
     def on_login_finished(self):
         """Handle login completion"""
-        self.login_btn.setText("Sign In")
+        self.login_btn.setText(self.tr('login_btn'))
         self.login_btn.setEnabled(True)
