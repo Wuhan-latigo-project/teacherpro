@@ -76,6 +76,17 @@ def ensure_init_files():
             else:
                 print(f"   {init_file} already exists")
 
+    # Also ensure account/ subdirectories have __init__.py if they are sub-packages
+    account_dir = Path("account")
+    if account_dir.exists():
+        for subdir in account_dir.iterdir():
+            if subdir.is_dir() and not subdir.name.startswith("__"):
+                init_file = subdir / "__init__.py"
+                if not init_file.exists():
+                    print(f"   Creating {init_file}")
+                    with open(init_file, "w") as f:
+                        f.write(f'# {subdir.name} sub-package\n')
+
 def shell(cmd, cwd=None):
     """Run a command and stream output."""
     print(f"\n>>> {' '.join(cmd)}")
@@ -96,7 +107,7 @@ def run_nuitka():
         PYTHON, "-m", "nuitka",
         "--standalone",
         "--enable-plugin=pyside6",
-        "--enable-plugin=tk-inter",
+        "--enable-plugin=tk-inter",  # ✅ دعم tkinter
         "--windows-console-mode=disable",
         "--windows-icon-from-ico=" + ICON_FILE,
         "--company-name=Latigo",
@@ -132,10 +143,15 @@ def run_nuitka():
         "--include-package=certifi",
         "--include-package=idna",
 
+        # ✅ تضمين websockets (للـ quiz)
+        "--include-package=websockets",
+
         # ============================================================
-        # ✅ تضمين OpenCV (cv2 فقط)
+        # ✅ تضمين OpenCV (cv2) و MediaPipe
         # ============================================================
         "--include-package=cv2",
+        "--include-package=opencv",
+        "--include-package=opencv_python",
         "--include-package=mediapipe",
 
         # ✅ تضمين PySide6 بشكل صريح
@@ -146,6 +162,8 @@ def run_nuitka():
         "--include-package=PySide6.QtSvg",
         "--include-package=PySide6.QtSvgWidgets",
         "--include-package=PySide6.QtNetwork",
+        "--include-package=PySide6.QtPdf",
+        "--include-package=PySide6.QtPdfWidgets",
         "--include-package=PySide6.QtWebEngineCore",
         "--include-package=PySide6.QtWebEngineWidgets",
         "--include-package=PySide6.QtWebChannel",
