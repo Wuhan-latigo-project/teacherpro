@@ -96,7 +96,7 @@ def run_nuitka():
         PYTHON, "-m", "nuitka",
         "--standalone",
         "--enable-plugin=pyside6",
-        "--enable-plugin=tk-inter",  # ✅ إضافة دعم tkinter
+        "--enable-plugin=tk-inter",
         "--windows-console-mode=disable",
         "--windows-icon-from-ico=" + ICON_FILE,
         "--company-name=Latigo",
@@ -132,8 +132,8 @@ def run_nuitka():
         "--include-package=certifi",
         "--include-package=idna",
 
-        # ✅ تضمين websockets (للـ quiz)
-        "--include-package=websockets",
+        # ❌ تم إزالة websockets (غير موجودة في البيئة)
+        # "--include-package=websockets",
 
         # ============================================================
         # ✅ تضمين OpenCV (cv2)
