@@ -11,9 +11,29 @@ except ImportError:
 API_BASE_URL = account_config.API_BASE_URL
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from PySide6.QtWidgets import *
-from PySide6.QtCore import *
-from PySide6.QtGui import *
+# ✅ استيراد صريح
+from PySide6.QtWidgets import (
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QStackedWidget,
+    QPushButton, QLabel, QFrame, QScrollArea, QSizePolicy, QMessageBox,
+    QProgressBar, QDialog, QLineEdit, QComboBox, QDialogButtonBox,
+    QTextEdit, QListWidget, QSpinBox, QCheckBox, QGroupBox, QTableWidget,
+    QTableWidgetItem, QHeaderView, QStatusBar, QSystemTrayIcon, QMenu,
+    QSlider, QFileDialog, QToolTip, QGraphicsOpacityEffect,
+    QGraphicsDropShadowEffect, QAction, QApplication, QFormLayout,
+    QGridLayout
+)
+from PySide6.QtCore import (
+    Qt, QTimer, QThreadPool, QPropertyAnimation, QEasingCurve,
+    QSize, QPoint, QRect, QEventLoop, QProcess, Signal, QObject,
+    QByteArray, QRectF, Property, QMetaObject, Q_ARG, QThread
+)
+
+from PySide6.QtGui import (
+    QFont, QPalette, QColor, QPixmap, QIcon, QKeySequence,
+    QPainter, QPen, QBrush, QLinearGradient, QPainterPath,
+    QImageReader, QFontDatabase, QShortcut, QAction as QGuiAction,
+    QImage, QMovie, QTransform, QClipboard
+)
 
 # Import from external files - use relative imports
 from .LoginWindow import LoginWindow
